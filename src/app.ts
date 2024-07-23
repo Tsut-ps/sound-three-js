@@ -9,17 +9,23 @@ class ThreeJSContainer {
     private light: THREE.Light;
 
     constructor() {
-
+        // 初期設定時にスタイルシートを読み込む
+        this.styleSheet();
     }
 
     // 画面部分の作成(表示する枠ごとに)*
-    public createRendererDOM = (width: number, height: number, cameraPos: THREE.Vector3) => {
+    public createRendererDOM = (cameraPos: THREE.Vector3) => {
         let renderer = new THREE.WebGLRenderer();
-        renderer.setSize(width, height);
+        renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setClearColor(new THREE.Color(0x495ed));
 
         //カメラの設定
-        let camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+        let camera = new THREE.PerspectiveCamera(
+            75,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            1000
+        );
         camera.position.copy(cameraPos);
         camera.lookAt(new THREE.Vector3(0, 0, 0));
 
@@ -33,13 +39,11 @@ class ThreeJSContainer {
 
             renderer.render(this.scene, camera);
             requestAnimationFrame(render);
-        }
+        };
         requestAnimationFrame(render);
 
-        renderer.domElement.style.cssFloat = "left";
-        renderer.domElement.style.margin = "10px";
         return renderer.domElement;
-    }
+    };
 
     // シーンの作成(全体で1回)
     private createScene = () => {
@@ -63,9 +67,20 @@ class ThreeJSContainer {
             this.cube.rotateX(0.01);
 
             requestAnimationFrame(update);
-        }
+        };
         requestAnimationFrame(update);
-    }
+    };
+
+    private styleSheet = () => {
+        const style = document.createElement("style");
+        style.innerHTML = `
+            body {
+                margin: 0;
+                overflow: hidden;
+            }
+        `;
+        document.head.appendChild(style);
+    };
 }
 
 window.addEventListener("DOMContentLoaded", init);
@@ -73,6 +88,6 @@ window.addEventListener("DOMContentLoaded", init);
 function init() {
     let container = new ThreeJSContainer();
 
-    let viewport = container.createRendererDOM(640, 480, new THREE.Vector3(-3, 3, 3));
+    let viewport = container.createRendererDOM(new THREE.Vector3(-3, 3, 3));
     document.body.appendChild(viewport);
 }
