@@ -10,7 +10,7 @@ module.exports = {
     mode: 'development',
     entry: './src/app.ts',
     output: {
-        path: path.resolve(__dirname, 'dist'),
+        path: path.resolve(__dirname, 'docs'),
         filename: '[name].js',
         chunkFilename: 'vendor.js',
     },
@@ -65,8 +65,8 @@ module.exports = {
     devtool: "inline-source-map",
     devServer: {
         static: {
-            directory: path.join(__dirname, "dist"),
-          },
+            directory: path.join(__dirname, "docs"),
+        },
         port: 8080,
     },
 }
