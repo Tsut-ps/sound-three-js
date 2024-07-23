@@ -25,11 +25,12 @@
     "@types/p5": "^1.7.6",
     "@types/stats.js": "^0.17.0",
     "@types/three": "^0.131.0",
+    "cannon-es": "^0.20.0",
     "dat.gui": "^0.7.7",
     "lil-gui": "^0.19.2",
+    "midi-parser-js": "^4.0.4",
     "stats.js": "^0.17.0",
-    "three": "^0.132.2",
-    "cannon-es": "^0.20.0"
+    "three": "^0.132.2"
   },
   "devDependencies": {
     "@types/webpack": "^4.41.22",
