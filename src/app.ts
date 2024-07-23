@@ -42,6 +42,26 @@ class ThreeJSContainer {
         };
         requestAnimationFrame(render);
 
+        // 念の為初期時にもリサイズ
+        onResize();
+
+        // ウィンドウのリサイズを検知
+        window.addEventListener("resize", onResize);
+
+        function onResize() {
+            // サイズ取得
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+
+            // レンダラーのサイズを調整
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(width, height);
+
+            // カメラを調整
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+        }
+
         return renderer.domElement;
     };
 
@@ -87,7 +107,6 @@ window.addEventListener("DOMContentLoaded", init);
 
 function init() {
     let container = new ThreeJSContainer();
-
     let viewport = container.createRendererDOM(new THREE.Vector3(-3, 3, 3));
     document.body.appendChild(viewport);
 }
