@@ -1,7 +1,7 @@
 {
-  "name": "cgprendering",
-  "version": "1.0.0",
-  "description": "Tokyo Denki University CG Rendering and Practice Program Template",
+  "name": "sound-three-js",
+  "version": "0.4.0",
+  "description": "MIDI Animation with Three.js",
   "main": "app.js",
   "scripts": {
     "prestart": "tsc threeVectorCloneTransformer.ts",
@@ -11,14 +11,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tomoakimoriya/CGPRendering.git"
+    "url": "git+https://github.com/Tsut-ps/sound-three-js.git"
   },
-  "author": "Tomoaki Moriya",
+  "author": "Tsut-ps",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/tomoakimoriya/CGPRendering/issues"
+    "url": "https://github.com/Tsut-ps/sound-three-js/issues"
   },
-  "homepage": "https://github.com/tomoakimoriya/CGPRendering#readme",
+  "homepage": "https://github.com/Tsut-ps/sound-three-js#readme",
   "dependencies": {
     "@tonejs/midi": "^2.0.28",
     "@tweenjs/tween.js": "^18.6.0",
