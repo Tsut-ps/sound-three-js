@@ -82,7 +82,7 @@ class ThreeJSContainer {
 
         //カメラの設定
         let camera = new THREE.PerspectiveCamera(
-            75,
+            65,
             window.innerWidth / window.innerHeight,
             0.1,
             1000
@@ -102,7 +102,7 @@ class ThreeJSContainer {
         // 発光エフェクトの設定
         const bloomPass = new UnrealBloomPass(
             new THREE.Vector2(window.innerWidth, window.innerHeight),
-            0.4, // ぼかしの強さ
+            0.5, // ぼかしの強さ
             1.2, // ぼかしの半径
             0.0 // しきい値
         );
@@ -148,20 +148,16 @@ class ThreeJSContainer {
     // 平面の作成
     private createPlane = () => {
         // 平面の作成
-        const geometry = new THREE.PlaneGeometry(10, 10);
+        const geometry = new THREE.PlaneGeometry(200, 200);
         const material = new THREE.MeshStandardMaterial({ color: 0x1e1e1e });
         const plane = new THREE.Mesh(geometry, material);
         plane.rotation.x = -0.5 * Math.PI;
         plane.position.set(0, -1, 0);
-        // 透明にする
-        plane.material.transparent = true;
-        plane.material.opacity = 0;
         this.scene.add(plane);
 
         // 平面の物理演算
         const shape = new CANNON.Plane();
-        const body = new CANNON.Body({ mass: 0 });
-        body.addShape(shape);
+        const body = new CANNON.Body({ mass: 0, shape: shape });
         body.position.set(plane.position.x, plane.position.y, plane.position.z);
         body.quaternion.set(
             plane.quaternion.x,
@@ -193,7 +189,7 @@ class ThreeJSContainer {
         duration: number // 音の長さ
     ) => {
         // 音の大きさを幅に
-        const width = (velocity / 5) + 0.02;
+        const width = velocity / 5 + 0.02;
 
         // 音の高さを色に
         const color = new THREE.Color().setHSL(pitch / 40, 1.0, 0.5);
@@ -216,13 +212,12 @@ class ThreeJSContainer {
         const shape = new CANNON.Box(
             new CANNON.Vec3(width / 2, height / 2, width / 2)
         );
-        const body = new CANNON.Body({ mass: 1 });
-        body.addShape(shape);
+        const body = new CANNON.Body({ mass: 1, shape: shape });
         this.world.addBody(body);
 
         // 立方体の初期位置
-        const x = (2 - Math.floor(this.cubes.length / 5)) / 2;
-        const z = (-2 + (this.cubes.length % 5)) / 2;
+        const x = (pitch - 50) / 5;
+        const z = 0;
         cube.position.set(x, 1, z);
         body.position.set(x, 1, z);
 
@@ -243,17 +238,6 @@ class ThreeJSContainer {
         this.scene.remove(cubeInfo.mesh);
         this.world.removeBody(cubeInfo.body);
         this.cubes = this.cubes.filter((cube) => cube !== cubeInfo);
-
-        // 他の立方体を移動
-        this.cubes.forEach((cube, index) => {
-            if (cube.createdTime > cubeInfo.createdTime) {
-                const x = (2 - Math.floor(index / 5)) / 2;
-                const y = cube.mesh.position.y;
-                const z = (-2 + (index % 5)) / 2;
-                cube.mesh.position.set(x, y, z);
-                cube.body.position.set(x, y, z);
-            }
-        });
     };
 
     // シーンの作成(全体で1回)
@@ -288,14 +272,20 @@ class ThreeJSContainer {
         // 衝突検知 (シミュレーションしたとき)
         this.world.addEventListener("postStep", this.onCollision);
 
+        // 時間を扱う
+        const clock = new THREE.Clock();
+
         // 毎フレームのupdateを呼んで更新
         // requestAnimationFrame により次フレームを呼ぶ
         let update: FrameRequestCallback = (time) => {
+            const delta = clock.getDelta();
+
             // 物理エンジンの更新 (進んだ時間だけ)
             this.world.fixedStep();
 
             // 物理エンジンの更新
             this.cubes.forEach((cube) => {
+                cube.body.position.z -= 1.5 * delta;
                 cube.mesh.position.copy(cube.body.position as any);
                 cube.mesh.quaternion.copy(cube.body.quaternion as any);
             });
@@ -308,7 +298,7 @@ class ThreeJSContainer {
     // 衝突検知
     private onCollision = () => {
         this.cubes.forEach((cube) => {
-            if (cube.body.position.y < -0.8 && !cube.isPlayed) {
+            if (cube.body.position.z < -0.8 && !cube.isPlayed) {
                 cube.isPlayed = true;
                 this.playSound(cube.velocity, cube.pitch, cube.duration);
             }
@@ -341,6 +331,6 @@ window.addEventListener("DOMContentLoaded", init);
 
 function init() {
     let container = new ThreeJSContainer();
-    let viewport = container.createRendererDOM(new THREE.Vector3(-1, 1, 1));
+    let viewport = container.createRendererDOM(new THREE.Vector3(-0.4, 0.7, 1));
     document.body.appendChild(viewport);
 }
