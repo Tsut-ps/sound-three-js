@@ -37,6 +37,9 @@ class ThreeJSContainer {
 
         // MIDIデータの読み込み
         this.loadMIDI("A.mid");
+
+        // MIDIデータをD&Dできるようにする
+        this.setupFileDrop();
     }
 
     // MIDIデータの読み込み
@@ -71,6 +74,36 @@ class ThreeJSContainer {
         });
 
         TONE.Transport.start();
+    };
+
+    // MIDIデータをD&Dできるようにする
+    private setupFileDrop = () => {
+        // ドロップエリアの作成
+        const dropArea = document.body;
+
+        // ドラッグオーバー時の処理
+        dropArea.addEventListener("dragover", (event) => {
+            event.preventDefault(); // ドラッグ時のデフォルトの挙動をキャンセル
+            event.dataTransfer.dropEffect = "copy"; // ドロップ時の挙動をコピーにする
+        });
+
+        // ドロップ時の処理
+        dropArea.addEventListener("drop", async (event) => {
+            event.preventDefault();
+
+            // ドロップされたファイルを取得
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                // 複数D&Dされた場合1つ目のファイルのみ取得
+                const file = files[0];
+
+                // MIDIデータだった場合
+                if (file.type === "audio/midi" || file.name.endsWith(".mid")) {
+                    const arrayBuffer = await file.arrayBuffer(); // ArrayBufferに変換
+                    this.midiData = new Midi(arrayBuffer); // MIDIデータに変換
+                }
+            }
+        });
     };
 
     // 画面部分の作成(表示する枠ごとに)
