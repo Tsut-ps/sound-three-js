@@ -7,12 +7,16 @@ import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPa
 import * as CANNON from "cannon-es";
 import * as TWEEN from "@tweenjs/tween.js";
 import * as TONE from "tone";
+import { Midi } from "@tonejs/midi";
 
 interface CubeInfo {
     mesh: THREE.Mesh;
     body: CANNON.Body;
     createdTime: number;
     isPlayed: boolean;
+    velocity: number;
+    pitch: number;
+    duration: number;
 }
 
 class ThreeJSContainer {
@@ -22,6 +26,7 @@ class ThreeJSContainer {
     private world: CANNON.World;
     private maxCubes = 25;
     private synth: TONE.Synth;
+    private midiData: Midi | undefined = undefined;
 
     constructor() {
         // 初期設定時にスタイルシートを読み込む
@@ -29,7 +34,35 @@ class ThreeJSContainer {
 
         // 音声の設定 (マスター)
         this.synth = new TONE.Synth().toDestination();
+
+        // MIDIデータの読み込み
+        this.loadMIDI("A.mid");
     }
+
+    // MIDIデータの読み込み
+    private loadMIDI = async (path: string) => {
+        const data = await Midi.fromUrl(path);
+        this.midiData = data;
+    };
+
+    // MIDIデータの処理
+    private processMidi = () => {
+        // MIDIデータがない場合は処理しない
+        if (!this.midiData) return;
+
+        // トラックごとに処理
+        this.midiData.tracks.forEach((track) => {
+            // ノートごとに処理
+            track.notes.forEach((note) => {
+                const velocity = note.velocity;
+                const pitch = note.midi;
+                const duration = note.duration;
+
+                // ノートをもとに立方体を作成
+                this.fallingCube(velocity, pitch, duration);
+            });
+        });
+    };
 
     // 画面部分の作成(表示する枠ごとに)
     public createRendererDOM = (cameraPos: THREE.Vector3) => {
@@ -111,6 +144,9 @@ class ThreeJSContainer {
         const plane = new THREE.Mesh(geometry, material);
         plane.rotation.x = -0.5 * Math.PI;
         plane.position.set(0, -1, 0);
+        // 透明にする
+        plane.material.transparent = true;
+        plane.material.opacity = 0;
         this.scene.add(plane);
 
         // 平面の物理演算
@@ -128,22 +164,39 @@ class ThreeJSContainer {
     };
 
     // 落下する立方体の作成
-    private fallingCube = () => {
+    private fallingCube = (
+        velocity: number,
+        pitch: number,
+        duration: number
+    ) => {
         if (this.cubes.length >= this.maxCubes) {
             // 立方体が最大数に達している場合は一番古いものを削除
             const oldCube = this.cubes.shift(); // 一番古い立方体を取得 + 削除
             oldCube && this.removeCube(oldCube); // (立方体が存在していたら削除)
         }
         // 立方体の作成
-        this.createCube();
+        this.createCube(velocity, pitch, duration);
     };
 
-    private createCube = () => {
+    private createCube = (
+        velocity: number, // 音の大きさ
+        pitch: number, // 音の高さ
+        duration: number // 音の長さ
+    ) => {
+        // 音の大きさを幅に
+        const width = velocity / 5;
+
+        // 音の高さを色に
+        const color = new THREE.Color().setHSL(pitch / 40, 1.0, 0.5);
+
+        // 音の長さを高さに
+        const height = duration * 0.1;
+
         // 立方体の作成 (ネオン調に光る)
-        let geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+        let geometry = new THREE.BoxGeometry(width, height, width);
         let material = new THREE.MeshToonMaterial({
-            color: 0xffffff,
-            emissive: 0xffffff,
+            color: color,
+            emissive: color,
             emissiveIntensity: 0.5,
         });
         const cube = new THREE.Mesh(geometry, material);
@@ -151,7 +204,9 @@ class ThreeJSContainer {
         this.scene.add(cube);
 
         // 物理エンジンの設定
-        const shape = new CANNON.Box(new CANNON.Vec3(0.1, 0.1, 0.1));
+        const shape = new CANNON.Box(
+            new CANNON.Vec3(width / 2, height / 2, width / 2)
+        );
         const body = new CANNON.Body({ mass: 1 });
         body.addShape(shape);
         this.world.addBody(body);
@@ -168,6 +223,9 @@ class ThreeJSContainer {
             body: body,
             createdTime: Date.now(),
             isPlayed: false,
+            velocity: velocity,
+            pitch: pitch,
+            duration: duration,
         });
     };
 
@@ -205,8 +263,8 @@ class ThreeJSContainer {
         // 平面の作成
         this.createPlane();
 
-        // 立方体の作成
-        window.addEventListener("click", this.fallingCube);
+        // MIDIデータの処理 (クリックされたら)
+        document.addEventListener("click", this.processMidi);
 
         //ライトの設定
         this.light = new THREE.DirectionalLight(0xffffff);
@@ -243,14 +301,17 @@ class ThreeJSContainer {
         this.cubes.forEach((cube) => {
             if (cube.body.position.y < -0.8 && !cube.isPlayed) {
                 cube.isPlayed = true;
-                this.playSound();
+                this.playSound(cube.pitch, cube.duration);
             }
         });
     };
 
     // 音を鳴らす
-    private playSound = () => {
-        this.synth.triggerAttackRelease("C4", "32n");
+    private playSound = (pitch: number, duration: number) => {
+        this.synth.triggerAttackRelease(
+            TONE.Frequency(pitch, "midi").toNote(),
+            duration
+        );
     };
 
     private styleSheet = () => {
