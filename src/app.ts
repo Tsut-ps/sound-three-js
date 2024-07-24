@@ -24,7 +24,7 @@ class ThreeJSContainer {
     private light: THREE.Light;
     private cubes: CubeInfo[] = [];
     private world: CANNON.World;
-    private maxCubes = 25;
+    private maxCubes = 512;
     private synth: TONE.PolySynth;
     private midiData: Midi | undefined = undefined;
 
