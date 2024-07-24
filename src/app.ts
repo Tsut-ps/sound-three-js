@@ -193,13 +193,13 @@ class ThreeJSContainer {
         duration: number // 音の長さ
     ) => {
         // 音の大きさを幅に
-        const width = velocity / 5;
+        const width = (velocity / 5) + 0.02;
 
         // 音の高さを色に
         const color = new THREE.Color().setHSL(pitch / 40, 1.0, 0.5);
 
         // 音の長さを高さに
-        const height = duration * 0.1;
+        const height = duration / 4;
 
         // 立方体の作成 (ネオン調に光る)
         let geometry = new THREE.BoxGeometry(width, height, width);
