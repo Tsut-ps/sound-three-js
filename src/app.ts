@@ -6,6 +6,7 @@ import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPa
 
 import * as CANNON from "cannon-es";
 import * as TWEEN from "@tweenjs/tween.js";
+import * as TONE from "tone";
 
 interface CubeInfo {
     mesh: THREE.Mesh;
@@ -20,10 +21,14 @@ class ThreeJSContainer {
     private cubes: CubeInfo[] = [];
     private world: CANNON.World;
     private maxCubes = 25;
+    private synth: TONE.Synth;
 
     constructor() {
         // 初期設定時にスタイルシートを読み込む
         this.styleSheet();
+
+        // 音声の設定 (マスター)
+        this.synth = new TONE.Synth().toDestination();
     }
 
     // 画面部分の作成(表示する枠ごとに)
@@ -103,10 +108,11 @@ class ThreeJSContainer {
         // 平面の作成
         const geometry = new THREE.PlaneGeometry(10, 10);
         const material = new THREE.MeshStandardMaterial({ color: 0x1e1e1e });
-        let plane = new THREE.Mesh(geometry, material);
+        const plane = new THREE.Mesh(geometry, material);
         plane.rotation.x = -0.5 * Math.PI;
         plane.position.set(0, -1, 0);
         this.scene.add(plane);
+
         // 平面の物理演算
         const shape = new CANNON.Plane();
         const body = new CANNON.Body({ mass: 0 });
@@ -212,9 +218,13 @@ class ThreeJSContainer {
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
         this.scene.add(ambientLight);
 
+        // 衝突検知 (シミュレーションしたとき)
+        this.world.addEventListener("postStep", this.onCollision);
+
         // 毎フレームのupdateを呼んで更新
         // requestAnimationFrame により次フレームを呼ぶ
         let update: FrameRequestCallback = (time) => {
+            // 物理エンジンの更新 (進んだ時間だけ)
             this.world.fixedStep();
 
             // 物理エンジンの更新
@@ -226,6 +236,21 @@ class ThreeJSContainer {
             requestAnimationFrame(update);
         };
         requestAnimationFrame(update);
+    };
+
+    // 衝突検知
+    private onCollision = () => {
+        this.cubes.forEach((cube) => {
+            if (cube.body.position.y < -0.8 && !cube.isPlayed) {
+                cube.isPlayed = true;
+                this.playSound();
+            }
+        });
+    };
+
+    // 音を鳴らす
+    private playSound = () => {
+        this.synth.triggerAttackRelease("C4", "32n");
     };
 
     private styleSheet = () => {
