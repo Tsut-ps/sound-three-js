@@ -19,7 +19,7 @@ class ThreeJSContainer {
     private light: THREE.Light;
     private cubes: CubeInfo[] = [];
     private world: CANNON.World;
-    private maxCubes = 20;
+    private maxCubes = 25;
 
     constructor() {
         // 初期設定時にスタイルシートを読み込む
@@ -98,6 +98,29 @@ class ThreeJSContainer {
         return renderer.domElement;
     };
 
+    // 平面の作成
+    private createPlane = () => {
+        // 平面の作成
+        const geometry = new THREE.PlaneGeometry(10, 10);
+        const material = new THREE.MeshStandardMaterial({ color: 0x1e1e1e });
+        let plane = new THREE.Mesh(geometry, material);
+        plane.rotation.x = -0.5 * Math.PI;
+        plane.position.set(0, -1, 0);
+        this.scene.add(plane);
+        // 平面の物理演算
+        const shape = new CANNON.Plane();
+        const body = new CANNON.Body({ mass: 0 });
+        body.addShape(shape);
+        body.position.set(plane.position.x, plane.position.y, plane.position.z);
+        body.quaternion.set(
+            plane.quaternion.x,
+            plane.quaternion.y,
+            plane.quaternion.z,
+            plane.quaternion.w
+        );
+        this.world.addBody(body);
+    };
+
     // 落下する立方体の作成
     private fallingCube = () => {
         if (this.cubes.length >= this.maxCubes) {
@@ -128,8 +151,8 @@ class ThreeJSContainer {
         this.world.addBody(body);
 
         // 立方体の初期位置
-        const x = 2;
-        const z = (((this.cubes.length) % 5) - 2) / 2;
+        const x = (2 - Math.floor(this.cubes.length / 5)) / 2;
+        const z = (-2 + (this.cubes.length % 5)) / 2;
         cube.position.set(x, 1, z);
         body.position.set(x, 1, z);
 
@@ -147,19 +170,22 @@ class ThreeJSContainer {
         this.scene.remove(cubeInfo.mesh);
         this.world.removeBody(cubeInfo.body);
         this.cubes = this.cubes.filter((cube) => cube !== cubeInfo);
+
+        // 他の立方体を移動
+        this.cubes.forEach((cube, index) => {
+            if (cube.createdTime > cubeInfo.createdTime) {
+                const x = (2 - Math.floor(index / 5)) / 2;
+                const y = cube.mesh.position.y;
+                const z = (-2 + (index % 5)) / 2;
+                cube.mesh.position.set(x, y, z);
+                cube.body.position.set(x, y, z);
+            }
+        });
     };
 
     // シーンの作成(全体で1回)
     private createScene = () => {
         this.scene = new THREE.Scene();
-
-        // 平面の作成
-        let planeGeometry = new THREE.PlaneGeometry(10, 10);
-        let planeMaterial = new THREE.MeshStandardMaterial({ color: 0x1e1e1e });
-        let plane = new THREE.Mesh(planeGeometry, planeMaterial);
-        plane.rotation.x = -0.5 * Math.PI;
-        plane.position.set(0, -1, 0);
-        this.scene.add(plane);
 
         const axesHelper = new THREE.AxesHelper(5);
         axesHelper.position.set(0, -1, 0);
@@ -169,6 +195,9 @@ class ThreeJSContainer {
         this.world = new CANNON.World({
             gravity: new CANNON.Vec3(0, -9.82, 0),
         });
+
+        // 平面の作成
+        this.createPlane();
 
         // 立方体の作成
         window.addEventListener("click", this.fallingCube);
