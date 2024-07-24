@@ -47,6 +47,9 @@ class ThreeJSContainer {
 
     // MIDIデータの処理
     private processMidi = () => {
+        // 一度のみ処理 (クリックイベントを削除)
+        document.removeEventListener("click", this.processMidi);
+
         // MIDIデータがない場合は処理しない
         if (!this.midiData) return;
 
@@ -54,14 +57,20 @@ class ThreeJSContainer {
         this.midiData.tracks.forEach((track) => {
             // ノートごとに処理
             track.notes.forEach((note) => {
-                const velocity = note.velocity;
-                const pitch = note.midi;
-                const duration = note.duration;
+                const now = TONE.now(); // 現在の時間
+                const time = note.time; // 開始時間
+                const velocity = note.velocity; // 音の大きさ
+                const pitch = note.midi; // 音の高さ
+                const duration = note.duration; // 音の長さ
 
-                // ノートをもとに立方体を作成
-                this.fallingCube(velocity, pitch, duration);
+                TONE.Transport.scheduleOnce(() => {
+                    // 時間が来たら立方体を落とす
+                    this.fallingCube(velocity, pitch, duration);
+                }, now + time);
             });
         });
+
+        TONE.Transport.start();
     };
 
     // 画面部分の作成(表示する枠ごとに)
