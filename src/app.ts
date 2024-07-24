@@ -1,13 +1,15 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass";
+
 import * as CANNON from "cannon-es";
 import * as TWEEN from "@tweenjs/tween.js";
 
 class ThreeJSContainer {
     private scene: THREE.Scene;
     private light: THREE.Light;
-    private gltfModel: THREE.Object3D | undefined;
 
     constructor() {
         // 初期設定時にスタイルシートを読み込む
@@ -18,7 +20,8 @@ class ThreeJSContainer {
     public createRendererDOM = (cameraPos: THREE.Vector3) => {
         let renderer = new THREE.WebGLRenderer();
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setClearColor(new THREE.Color(0x495ed));
+        renderer.setClearColor(new THREE.Color(0x1e1e1e));
+        renderer.shadowMap.enabled = true; // シャドウ有効
 
         //カメラの設定
         let camera = new THREE.PerspectiveCamera(
@@ -30,16 +33,35 @@ class ThreeJSContainer {
         camera.position.copy(cameraPos);
         camera.lookAt(new THREE.Vector3(0, 0, 0));
 
+        // カメラ操作の設定
         let orbitControls = new OrbitControls(camera, renderer.domElement);
 
+        // シーンの作成
         this.createScene();
+
+        // レンダリングの設定
+        const renderPass = new RenderPass(this.scene, camera);
+
+        // 発光エフェクトの設定
+        const bloomPass = new UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            0.4, // ぼかしの強さ
+            1.2, // ぼかしの半径
+            0.0 // しきい値
+        );
+
+        // ポストプロセッシングの設定
+        const composer = new EffectComposer(renderer);
+        composer.addPass(renderPass);
+        composer.addPass(bloomPass);
+        composer.setSize(window.innerWidth, window.innerHeight);
+
         // 毎フレームのupdateを呼んでrender
         // requestAnimationFrame により次フレームを呼ぶ
         let render: FrameRequestCallback = (time) => {
             orbitControls.update();
-
-            renderer.render(this.scene, camera);
             requestAnimationFrame(render);
+            composer.render();
         };
         requestAnimationFrame(render);
 
@@ -70,53 +92,42 @@ class ThreeJSContainer {
     private createScene = () => {
         this.scene = new THREE.Scene();
 
+        // 平面の作成
+        let planeGeometry = new THREE.PlaneGeometry(10, 10);
+        let planeMaterial = new THREE.MeshStandardMaterial({ color: 0x1e1e1e });
+        let plane = new THREE.Mesh(planeGeometry, planeMaterial);
+        plane.rotation.x = -0.5 * Math.PI;
+        plane.position.set(0, -1, 0);
+        this.scene.add(plane);
+
+        const axesHelper = new THREE.AxesHelper(5);
+        axesHelper.position.set(0, -1, 0);
+        this.scene.add(axesHelper);
+
+        // 立方体の作成 (ネオン調に光る)
+        let cubeGeometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+        let cubeMaterial = new THREE.MeshStandardMaterial({
+            color: 0xffffff,
+            emissive: 0xffffff,
+            emissiveIntensity: 0.5,
+        });
+        let cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+        cube.position.set(0, -1 + 0.1, 0);
+        this.scene.add(cube);
+
         //ライトの設定
         this.light = new THREE.DirectionalLight(0xffffff);
-        let lvec = new THREE.Vector3(1, 1, 1).normalize();
+        let lvec = new THREE.Vector3(8, 10, 1).normalize();
         this.light.position.set(lvec.x, lvec.y, lvec.z);
+        this.light.intensity = 0.5;
         this.scene.add(this.light);
 
-        // 3Dモデルの読み込み
-        const loader = new GLTFLoader();
-        loader.load(
-            "./256kokon.glb",
-            (gltf) => {
-                // glbは全部入りなのでシーンのみ読み込む
-                this.gltfModel = gltf.scene;
-                this.scene.add(this.gltfModel);
-
-                // セルルックにする
-                this.gltfModel.traverse((obj) => {
-                    if (obj instanceof THREE.Mesh) {
-                        const originalMaterial = obj.material as THREE.MeshStandardMaterial;
-                        const toonMaterial = new THREE.MeshToonMaterial({
-                            color: originalMaterial.color,
-                            map: originalMaterial.map,
-                            side: originalMaterial.side,
-                        });
-                        obj.material = toonMaterial;
-                    }
-                });
-                // シーンの中心にモデルを配置
-                this.gltfModel.position.set(-0.2, -0.58, 0);
-
-                // 斜めに回転
-                this.gltfModel.rotation.set(0.5, 0, 0);
-            },
-            undefined,
-            (error) => {
-                console.error(error);
-            }
-        );
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
+        this.scene.add(ambientLight);
 
         // 毎フレームのupdateを呼んで更新
         // requestAnimationFrame により次フレームを呼ぶ
         let update: FrameRequestCallback = (time) => {
-
-            if (this.gltfModel) {
-                this.gltfModel.rotation.y += 0.01;
-            }
-
             requestAnimationFrame(update);
         };
         requestAnimationFrame(update);
@@ -138,6 +149,6 @@ window.addEventListener("DOMContentLoaded", init);
 
 function init() {
     let container = new ThreeJSContainer();
-    let viewport = container.createRendererDOM(new THREE.Vector3(-1, -0.5, 1));
+    let viewport = container.createRendererDOM(new THREE.Vector3(-1, 1, 1));
     document.body.appendChild(viewport);
 }
