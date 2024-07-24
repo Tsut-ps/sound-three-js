@@ -25,7 +25,7 @@ class ThreeJSContainer {
     private cubes: CubeInfo[] = [];
     private world: CANNON.World;
     private maxCubes = 25;
-    private synth: TONE.Synth;
+    private synth: TONE.PolySynth;
     private midiData: Midi | undefined = undefined;
 
     constructor() {
@@ -33,7 +33,7 @@ class ThreeJSContainer {
         this.styleSheet();
 
         // 音声の設定 (マスター)
-        this.synth = new TONE.Synth().toDestination();
+        this.synth = new TONE.PolySynth(TONE.Synth).toDestination();
 
         // MIDIデータの読み込み
         this.loadMIDI("A.mid");
@@ -310,16 +310,18 @@ class ThreeJSContainer {
         this.cubes.forEach((cube) => {
             if (cube.body.position.y < -0.8 && !cube.isPlayed) {
                 cube.isPlayed = true;
-                this.playSound(cube.pitch, cube.duration);
+                this.playSound(cube.velocity, cube.pitch, cube.duration);
             }
         });
     };
 
     // 音を鳴らす
-    private playSound = (pitch: number, duration: number) => {
+    private playSound = (velocity: number, pitch: number, duration: number) => {
         this.synth.triggerAttackRelease(
             TONE.Frequency(pitch, "midi").toNote(),
-            duration
+            duration,
+            undefined,
+            velocity
         );
     };
 
