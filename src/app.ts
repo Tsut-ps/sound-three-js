@@ -7,9 +7,19 @@ import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPa
 import * as CANNON from "cannon-es";
 import * as TWEEN from "@tweenjs/tween.js";
 
+interface CubeInfo {
+    mesh: THREE.Mesh;
+    body: CANNON.Body;
+    createdTime: number;
+    isPlayed: boolean;
+}
+
 class ThreeJSContainer {
     private scene: THREE.Scene;
     private light: THREE.Light;
+    private cubes: CubeInfo[] = [];
+    private world: CANNON.World;
+    private maxCubes = 20;
 
     constructor() {
         // 初期設定時にスタイルシートを読み込む
@@ -88,6 +98,57 @@ class ThreeJSContainer {
         return renderer.domElement;
     };
 
+    // 落下する立方体の作成
+    private fallingCube = () => {
+        if (this.cubes.length >= this.maxCubes) {
+            // 立方体が最大数に達している場合は一番古いものを削除
+            const oldCube = this.cubes.shift(); // 一番古い立方体を取得 + 削除
+            oldCube && this.removeCube(oldCube); // (立方体が存在していたら削除)
+        }
+        // 立方体の作成
+        this.createCube();
+    };
+
+    private createCube = () => {
+        // 立方体の作成 (ネオン調に光る)
+        let geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+        let material = new THREE.MeshToonMaterial({
+            color: 0xffffff,
+            emissive: 0xffffff,
+            emissiveIntensity: 0.5,
+        });
+        const cube = new THREE.Mesh(geometry, material);
+        cube.castShadow = true;
+        this.scene.add(cube);
+
+        // 物理エンジンの設定
+        const shape = new CANNON.Box(new CANNON.Vec3(0.1, 0.1, 0.1));
+        const body = new CANNON.Body({ mass: 1 });
+        body.addShape(shape);
+        this.world.addBody(body);
+
+        // 立方体の初期位置
+        const x = 2;
+        const z = (((this.cubes.length) % 5) - 2) / 2;
+        cube.position.set(x, 1, z);
+        body.position.set(x, 1, z);
+
+        // 立方体の情報を保存
+        this.cubes.push({
+            mesh: cube,
+            body: body,
+            createdTime: Date.now(),
+            isPlayed: false,
+        });
+    };
+
+    // 立方体の削除
+    private removeCube = (cubeInfo: CubeInfo) => {
+        this.scene.remove(cubeInfo.mesh);
+        this.world.removeBody(cubeInfo.body);
+        this.cubes = this.cubes.filter((cube) => cube !== cubeInfo);
+    };
+
     // シーンの作成(全体で1回)
     private createScene = () => {
         this.scene = new THREE.Scene();
@@ -104,16 +165,13 @@ class ThreeJSContainer {
         axesHelper.position.set(0, -1, 0);
         this.scene.add(axesHelper);
 
-        // 立方体の作成 (ネオン調に光る)
-        let cubeGeometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
-        let cubeMaterial = new THREE.MeshStandardMaterial({
-            color: 0xffffff,
-            emissive: 0xffffff,
-            emissiveIntensity: 0.5,
+        // 物理エンジンの設定
+        this.world = new CANNON.World({
+            gravity: new CANNON.Vec3(0, -9.82, 0),
         });
-        let cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
-        cube.position.set(0, -1 + 0.1, 0);
-        this.scene.add(cube);
+
+        // 立方体の作成
+        window.addEventListener("click", this.fallingCube);
 
         //ライトの設定
         this.light = new THREE.DirectionalLight(0xffffff);
@@ -128,6 +186,14 @@ class ThreeJSContainer {
         // 毎フレームのupdateを呼んで更新
         // requestAnimationFrame により次フレームを呼ぶ
         let update: FrameRequestCallback = (time) => {
+            this.world.fixedStep();
+
+            // 物理エンジンの更新
+            this.cubes.forEach((cube) => {
+                cube.mesh.position.copy(cube.body.position as any);
+                cube.mesh.quaternion.copy(cube.body.quaternion as any);
+            });
+
             requestAnimationFrame(update);
         };
         requestAnimationFrame(update);
