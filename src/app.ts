@@ -20,6 +20,7 @@ interface CubeInfo {
 }
 
 interface UIElements {
+    progress: HTMLDivElement;
     guide: HTMLParagraphElement;
     currentNote: HTMLParagraphElement;
     totalNote: HTMLParagraphElement;
@@ -42,6 +43,7 @@ class ThreeJSContainer {
     private currentNoteIndex: number | undefined = undefined;
     private totalNotes: number | undefined = undefined;
     private isPaused = false;
+    private progress: number = 0;
 
     constructor() {
         // 初期設定時にスタイルシートを読み込む
@@ -164,7 +166,25 @@ class ThreeJSContainer {
         totalNoteLabel.innerText = "Total Note: 0";
         ui.appendChild(totalNoteLabel);
 
+        // スペースを作成しプログレスバーとする
+        const space = document.createElement("div");
+        space.style.width = "200px";
+        space.style.height = "16px";
+        space.style.backgroundColor = "white";
+        space.style.borderRadius = "2px";
+        space.style.marginTop = "1em";
+        space.style.overflow = "hidden";
+        ui.appendChild(space);
+
+        // スペースにプログレスバーを追加
+        const progress = document.createElement("div");
+        progress.style.width = this.progress * 100 + "%";
+        progress.style.height = "100%";
+        progress.style.backgroundColor = "#1177bb";
+        space.appendChild(progress);
+
         this.uiElements = {
+            progress: progress,
             guide: guide,
             currentNote: currentNoteLabel,
             totalNote: totalNoteLabel,
@@ -177,6 +197,10 @@ class ThreeJSContainer {
 
         const currentNoteIndex = this.currentNoteIndex ?? 0;
         const totalNotes = this.totalNotes ?? 0;
+        this.progress = currentNoteIndex / totalNotes;
+
+        // プログレスバーを更新
+        this.uiElements.progress.style.width = this.progress * 100 + "%";
 
         // ガイドを更新 (一時停止中、終了時、再生中)
         this.uiElements.guide.innerText = `${
