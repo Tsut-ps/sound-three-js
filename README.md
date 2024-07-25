@@ -1,19 +1,23 @@
-## インストール
+# MIDI可視化Webアプリ
 
-1. [Node.js](https://nodejs.org/ja/)をインストールする。
-
-2. ワークスペースを Visual Studio Code で開く。
-
-3. F1 を押し、`run task` と入力し、`npm: install` を選択する。
+Three.js を使った MIDI を可視化するアプリです。  
+音を鳴らすために Tone.js を、物理演算に cannon-es を使っています。
 
 
-## 実行
+## 操作方法
 
-1. F5 キーを押すだけ
+- クリック: 同梱している MIDI ファイルを再生
+- MIDI ファイルを D&D してからクリック: そのファイルを読み込んで再生  
+- スペースキー: 一時停止
 
 
-## 別のコードを編集する
+## Catch-on-Fire.mid について
 
-通常、このタスクは `src/app.ts` のみを実行します。  
-コピーしてリネームすることでコードを保存することができます（例：`app-1.ts`）。
+この MIDI ファイルは Booth にて配布されている楽曲を、本コンテンツ向けにアレンジしたものです。
 
+- 作者: ruha(Pastel Tone Music)
+- Booth: [Catch on Fire](https://booth.pm/ja/items/3645600)
+- 利用規約: https://note.com/ruha_music/n/n0103b849c384
+
+本 MIDI ファイルは二次配布を目的としていないため、当リポジトリから MIDI ファイルのみをDLするなどの行為を禁止します。  
+使用したい場合、上記Boothから入手してください。

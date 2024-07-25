@@ -53,7 +53,7 @@ class ThreeJSContainer {
         this.synth = new TONE.PolySynth(TONE.Synth).toDestination();
 
         // MIDIデータの読み込み
-        this.loadMIDI("A.mid");
+        this.loadMIDI("Catch-on-Fire.mid");
 
         // MIDIデータをD&Dできるようにする
         this.setupFileDrop();
