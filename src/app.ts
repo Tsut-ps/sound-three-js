@@ -415,7 +415,7 @@ class ThreeJSContainer {
 
             // 物理エンジンの更新
             this.cubes.forEach((cube) => {
-                cube.body.position.z -= 1.5 * delta;
+                cube.body.position.z -= 2 * delta;
                 cube.mesh.position.copy(cube.body.position as any);
                 cube.mesh.quaternion.copy(cube.body.quaternion as any);
             });
@@ -428,7 +428,7 @@ class ThreeJSContainer {
     // 衝突検知
     private onCollision = () => {
         this.cubes.forEach((cube) => {
-            if (cube.body.position.z < -0.8 && !cube.isPlayed) {
+            if (cube.body.position.z < -1.2 && !cube.isPlayed) {
                 cube.isPlayed = true;
                 this.playSound(cube.velocity, cube.pitch, cube.duration);
             }
@@ -441,7 +441,7 @@ class ThreeJSContainer {
             TONE.Frequency(pitch, "midi").toNote(),
             duration,
             undefined,
-            velocity
+            velocity / 2 // 音割れを防ぐために音の大きさを半分に
         );
     };
 
