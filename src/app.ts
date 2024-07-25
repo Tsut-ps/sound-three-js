@@ -20,6 +20,7 @@ interface CubeInfo {
 }
 
 interface UIElements {
+    guide: HTMLParagraphElement;
     currentNote: HTMLParagraphElement;
     totalNote: HTMLParagraphElement;
 }
@@ -40,6 +41,7 @@ class ThreeJSContainer {
     private uiElements: UIElements | undefined = undefined;
     private currentNoteIndex: number | undefined = undefined;
     private totalNotes: number | undefined = undefined;
+    private isPaused = false;
 
     constructor() {
         // 初期設定時にスタイルシートを読み込む
@@ -85,6 +87,7 @@ class ThreeJSContainer {
                 const pitch = note.midi; // 音の高さ
                 const duration = note.duration; // 音の長さ
                 this.totalNotes++; // ノートの合計を更新
+                this.updateUI();
 
                 TONE.Transport.scheduleOnce(() => {
                     // 時間が来たら立方体を落とす
@@ -99,6 +102,7 @@ class ThreeJSContainer {
             });
         });
 
+        // MIDIデータを再生
         TONE.Transport.start();
     };
 
@@ -143,10 +147,12 @@ class ThreeJSContainer {
         ui.style.color = "white";
         ui.style.fontFamily = "sans-serif";
         ui.style.zIndex = "1000";
-        ui.innerHTML = `
-            <p>Click (or drop a MIDI file) to play</p>
-        `;
         document.body.appendChild(ui);
+
+        // ガイド
+        const guide = document.createElement("p");
+        guide.innerText = "Click (or drop a MIDI file) to play";
+        ui.appendChild(guide);
 
         // 現在のノートを表示
         const currentNoteLabel = document.createElement("p");
@@ -159,6 +165,7 @@ class ThreeJSContainer {
         ui.appendChild(totalNoteLabel);
 
         this.uiElements = {
+            guide: guide,
             currentNote: currentNoteLabel,
             totalNote: totalNoteLabel,
         };
@@ -171,6 +178,10 @@ class ThreeJSContainer {
         const currentNoteIndex = this.currentNoteIndex ?? 0;
         const totalNotes = this.totalNotes ?? 0;
 
+        // ガイドを更新
+        this.uiElements.guide.innerText = `${
+            this.isPaused ? "Paused... (Space to Play)" : "Now Playing... (Space to Pause)"
+        }`;
         // 現在のノートを表示
         this.uiElements.currentNote.innerText = `Current Note: ${currentNoteIndex}`;
         // ノートの合計を表示
@@ -362,6 +373,17 @@ class ThreeJSContainer {
 
         // MIDIデータの処理 (クリックされたら)
         document.addEventListener("click", this.processMidi);
+
+        // スペースキーで一時停止
+        document.addEventListener("keydown", (event) => {
+            if (event.key === " ") {
+                this.isPaused = !this.isPaused;
+                this.isPaused ? TONE.Transport.pause() : TONE.Transport.start();
+
+                // UIの更新
+                this.updateUI();
+            }
+        });
 
         //ライトの設定
         this.light = new THREE.DirectionalLight(0xffffff);
