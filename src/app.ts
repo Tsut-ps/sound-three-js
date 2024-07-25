@@ -19,14 +19,27 @@ interface CubeInfo {
     duration: number;
 }
 
+interface UIElements {
+    currentNote: HTMLParagraphElement;
+    totalNote: HTMLParagraphElement;
+}
+
 class ThreeJSContainer {
+    // 3Dシーン
     private scene: THREE.Scene;
     private light: THREE.Light;
     private cubes: CubeInfo[] = [];
     private world: CANNON.World;
     private maxCubes = 512;
+
+    // MIDI
     private synth: TONE.PolySynth;
     private midiData: Midi | undefined = undefined;
+
+    // UI
+    private uiElements: UIElements | undefined = undefined;
+    private currentNoteIndex: number | undefined = undefined;
+    private totalNotes: number | undefined = undefined;
 
     constructor() {
         // 初期設定時にスタイルシートを読み込む
@@ -40,6 +53,9 @@ class ThreeJSContainer {
 
         // MIDIデータをD&Dできるようにする
         this.setupFileDrop();
+
+        // UIの作成
+        this.createUI();
     }
 
     // MIDIデータの読み込み
@@ -50,6 +66,9 @@ class ThreeJSContainer {
 
     // MIDIデータの処理
     private processMidi = () => {
+        this.currentNoteIndex = 0;
+        this.totalNotes = 0;
+
         // 一度のみ処理 (クリックイベントを削除)
         document.removeEventListener("click", this.processMidi);
 
@@ -65,10 +84,17 @@ class ThreeJSContainer {
                 const velocity = note.velocity; // 音の大きさ
                 const pitch = note.midi; // 音の高さ
                 const duration = note.duration; // 音の長さ
+                this.totalNotes++; // ノートの合計を更新
 
                 TONE.Transport.scheduleOnce(() => {
                     // 時間が来たら立方体を落とす
                     this.fallingCube(velocity, pitch, duration);
+
+                    // 現在のノートを更新
+                    this.currentNoteIndex++;
+
+                    // UIの更新
+                    this.updateUI();
                 }, now + time);
             });
         });
@@ -104,6 +130,51 @@ class ThreeJSContainer {
                 }
             }
         });
+    };
+
+    // UIの作成
+    private createUI = () => {
+        const ui = document.createElement("div");
+        ui.style.position = "absolute";
+        ui.style.top = "0";
+        ui.style.left = "0";
+        ui.style.margin = "1em 2em";
+        ui.style.fontSize = "14px";
+        ui.style.color = "white";
+        ui.style.fontFamily = "sans-serif";
+        ui.style.zIndex = "1000";
+        ui.innerHTML = `
+            <p>Click (or drop a MIDI file) to play</p>
+        `;
+        document.body.appendChild(ui);
+
+        // 現在のノートを表示
+        const currentNoteLabel = document.createElement("p");
+        currentNoteLabel.innerText = "Current Note: 0";
+        ui.appendChild(currentNoteLabel);
+
+        // ノートの合計を表示
+        const totalNoteLabel = document.createElement("p");
+        totalNoteLabel.innerText = "Total Note: 0";
+        ui.appendChild(totalNoteLabel);
+
+        this.uiElements = {
+            currentNote: currentNoteLabel,
+            totalNote: totalNoteLabel,
+        };
+    };
+
+    // UIの更新
+    private updateUI = () => {
+        if (!this.uiElements) return;
+
+        const currentNoteIndex = this.currentNoteIndex ?? 0;
+        const totalNotes = this.totalNotes ?? 0;
+
+        // 現在のノートを表示
+        this.uiElements.currentNote.innerText = `Current Note: ${currentNoteIndex}`;
+        // ノートの合計を表示
+        this.uiElements.totalNote.innerText = `Total Note: ${totalNotes}`;
     };
 
     // 画面部分の作成(表示する枠ごとに)
