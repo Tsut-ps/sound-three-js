@@ -1,5 +1,7 @@
 # MIDI可視化Webアプリ
 
+![image](https://github.com/user-attachments/assets/a7dba775-92fa-4411-bb0a-67cec6208d88)
+
 Three.js を使った MIDI を可視化するアプリです。  
 音を鳴らすために Tone.js を、物理演算に cannon-es を使っています。
 
