@@ -178,9 +178,13 @@ class ThreeJSContainer {
         const currentNoteIndex = this.currentNoteIndex ?? 0;
         const totalNotes = this.totalNotes ?? 0;
 
-        // ガイドを更新
+        // ガイドを更新 (一時停止中、終了時、再生中)
         this.uiElements.guide.innerText = `${
-            this.isPaused ? "Paused... (Space to Play)" : "Now Playing... (Space to Pause)"
+            this.isPaused // 一時停止中か
+                ? "Paused... (Space to Play)" // Yes
+                : currentNoteIndex === totalNotes // No → 最後のノートまで再生したか
+                ? "Finished!" // Yes
+                : "Now Playing... (Space to Pause)" // No
         }`;
         // 現在のノートを表示
         this.uiElements.currentNote.innerText = `Current Note: ${currentNoteIndex}`;
