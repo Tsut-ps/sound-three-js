@@ -13,7 +13,13 @@ Three.js を使った MIDI を可視化するアプリです。
 - スペースキー: 一時停止
 
 
-## Catch-on-Fire.mid について
+## 使用している技術
+
+- [Three.js](https://github.com/mrdoob/three.js)
+- [Tone.js](https://github.com/Tonejs/Tone.js)
+- [cannon-es](https://github.com/pmndrs/cannon-es)
+
+### Catch-on-Fire.mid について
 
 この MIDI ファイルは Booth にて配布されている楽曲を、本コンテンツ向けにアレンジしたものです。
 
