@@ -5,7 +5,6 @@ import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass";
 
 import * as CANNON from "cannon-es";
-import * as TWEEN from "@tweenjs/tween.js";
 import * as TONE from "tone";
 import { Midi } from "@tonejs/midi";
 
