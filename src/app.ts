@@ -422,7 +422,7 @@ class ThreeJSContainer {
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
         this.scene.add(ambientLight);
 
-        // 衝突検知 (シミュレーションしたとき)
+        // 物理演算のシミュレーション後に実行
         this.world.addEventListener("postStep", this.onCollision);
 
         // 時間を扱う
@@ -448,7 +448,7 @@ class ThreeJSContainer {
         requestAnimationFrame(update);
     };
 
-    // 衝突検知
+    // 一定距離を超えたら音を鳴らす
     private onCollision = () => {
         this.cubes.forEach((cube) => {
             if (cube.body.position.z < -1.2 && !cube.isPlayed) {
