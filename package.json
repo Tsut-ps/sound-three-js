@@ -1,6 +1,6 @@
 {
   "name": "sound-three-js",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "description": "MIDI Animation with Three.js",
   "main": "app.js",
   "scripts": {
